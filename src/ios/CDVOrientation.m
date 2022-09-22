@@ -34,7 +34,7 @@
     NSInteger orientationMask = [[command argumentAtIndex:0] integerValue];
     CDVViewController* vc = (CDVViewController*)self.viewController;
     NSMutableArray* result = [[NSMutableArray alloc] init];
-    
+
     if(orientationMask & 1) {
         [result addObject:[NSNumber numberWithInt:UIInterfaceOrientationPortrait]];
     }
@@ -47,14 +47,14 @@
     if(orientationMask & 8) {
         [result addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft]];
     }
-    
+
     SEL selector = NSSelectorFromString(@"setSupportedOrientations:");
-    
+
     if([vc respondsToSelector:selector]) {
         if (orientationMask != 15 || [UIDevice currentDevice] == nil) {
             ((void (*)(CDVViewController*, SEL, NSMutableArray*))objc_msgSend)(vc,selector,result);
         }
-        
+
         if ([UIDevice currentDevice] != nil){
             NSNumber *value = nil;
             if (orientationMask != 15) {
@@ -80,20 +80,24 @@
             }
             if (value != nil) {
                 _isLocked = true;
-                [[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+                if (@available(iOS 16.0, *)) {
+                    [self.viewController setNeedsUpdateOfSupportedInterfaceOrientations];
+                } else {
+                    [[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+                }
             } else {
                 _isLocked = false;
             }
         }
-        
+
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     }
     else {
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_INVALID_ACTION messageAsString:@"Error calling to set supported orientations"];
     }
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    
+
 }
 
 @end
